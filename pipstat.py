@@ -8,10 +8,13 @@ Usage:
 '''
 from __future__ import unicode_literals, print_function
 import sys
+PY2 = int(sys.version[0]) == 2
 import math
 from collections import OrderedDict
-
-import xmlrpclib
+if PY2:
+    from xmlrpclib import ServerProxy
+else:
+    from xmlrpc.client import ServerProxy
 
 __version__ = "0.1.0"
 __author__ = "Steven Loria"
@@ -48,17 +51,23 @@ def bargraph(data):
         lines.append(line)
     return '\n'.join(lines)
 
+class NotFoundError(Exception):
+    pass
 
 class Package(object):
 
-    def __init__(self, name, client=None):
+    def __init__(self, name, client):
         self.client = client
         self.name = name
 
     @lazy_property
     def versions(self):
         """Return a list of versions"""
-        return self.client.package_releases(self.name, True)
+        versions = self.client.package_releases(self.name, True)
+        if versions:
+            return versions
+        else:
+            raise NotFoundError('Package not found')
 
     @lazy_property
     def version_downloads(self):
@@ -111,11 +120,16 @@ def main():
         print(__doc__)
         sys.exit(1)
     else:
-        client = xmlrpclib.ServerProxy('http://pypi.python.org/pypi')
+        client = ServerProxy('http://pypi.python.org/pypi')
         for name in package_names:
             print("Fetching statistics for {name!r}. . .".format(name=name))
             package = Package(name, client=client)
-            graph = bargraph(package.version_downloads)
+            try:
+                version_downloads = package.version_downloads
+            except NotFoundError:
+                print("No versions of {0!r} were found.".format(name))
+                sys.exit(1)
+            graph = bargraph(version_downloads)
             min_ver, min_downloads = package.min_version
             max_ver, max_downloads = package.max_version
             avg_downloads = package.average_downloads
