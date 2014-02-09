@@ -138,7 +138,7 @@ def main():
             header = "Download statistics for {name}".format(name=name)
             print(header)
             print('=' * len(header))
-            print()
+            print('Downloads by version')
             print(graph)
             print()
             print("Min downloads:\t\t{min_downloads:,} ({min_ver})".format(**locals()))

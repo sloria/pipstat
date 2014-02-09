@@ -1,28 +1,42 @@
-===============================
+=======
 pipstat
-===============================
+=======
 
-.. image:: https://badge.fury.io/py/pipstat.png
-    :target: http://badge.fury.io/py/pipstat
+Get download statistics for PyPI packages from the command line.
+::
 
-.. image:: https://travis-ci.org/sloria/pipstat.png?branch=master
-        :target: https://travis-ci.org/sloria/pipstat
+    $ pipstat marshmallow
+    Fetching statistics for 'marshmallow'. . .
 
-.. image:: https://pypip.in/d/pipstat/badge.png
-        :target: https://crate.io/packages/pipstat?version=latest
+    Download statistics for marshmallow
+    ===================================
+    Downloads by version
+    0.1.0 [ 818 ] ********************************************************************
+    0.2.0 [ 855 ] ***********************************************************************
+    0.2.1 [ 806 ] *******************************************************************
+    0.3.0 [ 760 ] ***************************************************************
+    0.3.1 [ 695 ] *********************************************************
+    0.4.0 [ 640 ] *****************************************************
+    0.4.1 [ 695 ] *********************************************************
+    0.5.0 [ 717 ] ***********************************************************
+    0.5.1 [ 298 ] ************************
 
+    Min downloads:      298 (0.5.1)
+    Max downloads:      855 (0.2.0)
+    Avg downloads:      698
+    Total downloads:    6,284
 
-Get download counts for PyPI packages
+Get it now
+----------
+::
 
-Features
---------
+    pip install pipstat
 
-* TODO
 
 Requirements
 ------------
 
-- Python >= 2.6 or >= 3.3
+- Python >= 2.7 or >= 3.2
 
 License
 -------

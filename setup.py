@@ -1,8 +1,27 @@
 import sys
-import os
+import re
 import subprocess
 
 from setuptools import setup
+
+
+def find_version(fname):
+    '''Attempts to find the version number in the file names fname.
+    Raises RuntimeError if not found.
+    '''
+    version = ''
+    with open(fname, 'r') as fp:
+        reg = re.compile(r'__version__ = [\'"]([^\'"]*)[\'"]')
+        for line in fp:
+            m = reg.match(line)
+            if m:
+                version = m.group(1)
+                break
+    if not version:
+        raise RuntimeError('Cannot find version information')
+    return version
+
+__version__ = find_version("pipstat.py")
 
 PUBLISH_CMD = "python setup.py register sdist upload"
 TEST_PUBLISH_CMD = 'python setup.py register -r test sdist upload -r test'
@@ -23,8 +42,8 @@ def read(fname):
 
 setup(
     name='pipstat',
-    version="0.1.0",
-    description='Get download counts for PyPI packages',
+    version=__version__,
+    description='Get download counts for PyPI packages from the command line',
     long_description=read("README.rst"),
     author='Steven Loria',
     author_email='sloria1@gmail.com',
