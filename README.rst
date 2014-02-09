@@ -2,6 +2,14 @@
 pipstat
 =======
 
+.. image:: https://badge.fury.io/py/pipstat.png
+    :target: http://badge.fury.io/py/pipstat
+    :alt: Latest version
+
+.. image:: https://travis-ci.org/sloria/pipstat.png?branch=master
+    :target: https://travis-ci.org/sloria/pipstat
+    :alt: Travis-CI
+
 Get download statistics for PyPI packages from the command line.
 ::
 
