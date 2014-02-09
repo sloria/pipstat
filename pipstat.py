@@ -9,6 +9,7 @@ Usage:
 from __future__ import unicode_literals, print_function
 import sys
 import os
+import time
 PY2 = int(sys.version[0]) == 2
 import math
 from collections import OrderedDict
@@ -21,6 +22,8 @@ __version__ = "0.1.0"
 __author__ = "Steven Loria"
 __license__ = "MIT"
 
+DATE_FORMAT = "%y/%m/%d"
+MARGIN = 3
 TICK = '*'
 
 
@@ -48,7 +51,7 @@ def get_display_width():
 def bargraph(data):
     """Return a bar graph as a string, given a dictionary of data."""
     lines = []
-    max_length = min(max(len(key) for key in data.keys()), 20)
+    max_length = min(len(max(data.keys(), key=len)), 20)
     n_val_characters = get_display_width() - max_length
     max_val = max(data.values())
     max_val_length = max(len('{:,}'.format(val)) for val in data.values())
@@ -82,14 +85,39 @@ class Package(object):
             raise NotFoundError('Package not found')
 
     @lazy_property
+    def release_urls(self):
+        return [self.client.release_urls(self.name, release)
+                for release in self.versions]
+
+    @lazy_property
     def version_downloads(self):
         """Return a dictionary of version:download_count pairs."""
         ret = OrderedDict()
-        for release in reversed(self.versions):
-            downloads = self.client.release_downloads(self.name, release)
-            download_count = sum(dl for _, dl in downloads)
+        for release, info in self.release_info:
+            download_count = sum(file_['downloads'] for file_ in info)
             ret[release] = download_count
         return ret
+
+    @property
+    def release_info(self):
+        return reversed(zip(self.versions, self.release_urls))
+
+    @lazy_property
+    def version_dates(self):
+        ret = OrderedDict()
+        for release, info in self.release_info:
+            upload_time = info[0]['upload_time']
+            ret[release] = upload_time
+        return ret
+
+    def chart(self):
+        data = OrderedDict()
+        for version, dl_count in self.version_downloads.items():
+            date_formatted = time.strftime(DATE_FORMAT,
+                self.version_dates[version].timetuple())
+            key = "{0:6} {1}".format(version, date_formatted)
+            data[key] = dl_count
+        return bargraph(data)
 
     @lazy_property
     def downloads(self):
@@ -114,7 +142,11 @@ class Package(object):
         return int(self.downloads / len(self.versions))
 
     def __repr__(self):
-        return 'Package(name={0:r})'.format(self.name)
+        return 'Package(name={0:!r})'.format(self.name)
+
+
+def create_server_proxy():
+    return ServerProxy('http://pypi.python.org/pypi')
 
 
 def main():
@@ -132,7 +164,7 @@ def main():
         print(__doc__)
         sys.exit(1)
     else:
-        client = ServerProxy('http://pypi.python.org/pypi')
+        client = create_server_proxy()
         for name in package_names:
             print("Fetching statistics for {name!r}. . .".format(name=name))
             package = Package(name, client=client)
@@ -141,7 +173,7 @@ def main():
             except NotFoundError:
                 print("No versions of {0!r} were found.".format(name))
                 sys.exit(1)
-            graph = bargraph(version_downloads)
+            chart = package.chart()
             min_ver, min_downloads = package.min_version
             max_ver, max_downloads = package.max_version
             avg_downloads = package.average_downloads
@@ -151,7 +183,7 @@ def main():
             print(header)
             print('=' * len(header))
             print('Downloads by version')
-            print(graph)
+            print(chart)
             print()
             print("Min downloads:   {min_downloads:12,} ({min_ver})".format(**locals()))
             print("Max downloads:   {max_downloads:12,} ({max_ver})".format(**locals()))
