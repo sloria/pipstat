@@ -45,7 +45,7 @@ def bargraph(data):
     scale = max(1, int(math.ceil(float(max_val) / n_val_characters)))
     template = "{key:{key_width}} [ {value:{val_width}d} ] {bar}"
     for key, value in data.items():
-        bar = (value / scale) * TICK
+        bar = int(value / scale) * TICK
         line = template.format(key=key[:max_length], value=value,
             bar=bar, key_width=max_length, val_width=max_val_length)
         lines.append(line)
