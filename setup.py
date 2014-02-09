@@ -51,7 +51,7 @@ setup(
     install_requires=['docopt'],
     license=read("LICENSE"),
     zip_safe=False,
-    keywords='pipstat',
+    keywords='pipstat pypi statistics download count metrics',
     classifiers=[
         'Development Status :: 2 - Pre-Alpha',
         'Intended Audience :: Developers',

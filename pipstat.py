@@ -8,6 +8,7 @@ Usage:
 '''
 from __future__ import unicode_literals, print_function
 import sys
+import os
 PY2 = int(sys.version[0]) == 2
 import math
 from collections import OrderedDict
@@ -35,11 +36,20 @@ def lazy_property(fn):
     return _lazy_property
 
 
+def get_display_width():
+    """Get the maximum display width to output."""
+    if PY2:  # Python 2 does not have get_terminal_size, so just get it fron
+            # the environment variable and fallback to 80
+        return os.environ.get('COLUMNS') or 80
+    else:  # On Python 3, we can use the entire width of the terminal
+        return os.get_terminal_size().columns
+
+
 def bargraph(data):
     """Return a bar graph as a string, given a dictionary of data."""
     lines = []
     max_length = min(max(len(key) for key in data.keys()), 20)
-    n_val_characters = 80 - max_length
+    n_val_characters = get_display_width() - max_length
     max_val = max(data.values())
     max_val_length = max(len('{:,}'.format(val)) for val in data.values())
     scale = max(1, int(math.ceil(float(max_val) / n_val_characters)))
@@ -51,8 +61,10 @@ def bargraph(data):
         lines.append(line)
     return '\n'.join(lines)
 
+
 class NotFoundError(Exception):
     pass
+
 
 class Package(object):
 
