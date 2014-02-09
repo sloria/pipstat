@@ -48,7 +48,7 @@ setup(
     author='Steven Loria',
     author_email='sloria1@gmail.com',
     url='https://github.com/sloria/pipstat',
-    install_requires=['docopt'],
+    install_requires=['setuptools>=2.1'],
     license=read("LICENSE"),
     zip_safe=False,
     keywords='pipstat pypi statistics download count metrics',
