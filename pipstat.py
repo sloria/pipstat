@@ -40,7 +40,7 @@ def get_display_width():
     """Get the maximum display width to output."""
     if PY2:  # Python 2 does not have get_terminal_size, so just get it fron
             # the environment variable and fallback to 80
-        return os.environ.get('COLUMNS') or 80
+        return int(os.environ.get('COLUMNS')) or 80
     else:  # On Python 3, we can use the entire width of the terminal
         return os.get_terminal_size().columns
 
