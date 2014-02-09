@@ -41,9 +41,9 @@ def bargraph(data):
     max_length = min(max(len(key) for key in data.keys()), 20)
     n_val_characters = 80 - max_length
     max_val = max(data.values())
-    max_val_length = max(len(str(val)) for val in data.values())
+    max_val_length = max(len('{:,}'.format(val)) for val in data.values())
     scale = max(1, int(math.ceil(float(max_val) / n_val_characters)))
-    template = "{key:{key_width}} [ {value:{val_width}d} ] {bar}"
+    template = "{key:{key_width}} [ {value:{val_width},d} ] {bar}"
     for key, value in data.items():
         bar = (value / scale) * TICK
         line = template.format(key=key[:max_length], value=value,
@@ -141,10 +141,10 @@ def main():
             print('Downloads by version')
             print(graph)
             print()
-            print("Min downloads:\t\t{min_downloads:,} ({min_ver})".format(**locals()))
-            print("Max downloads:\t\t{max_downloads:,} ({max_ver})".format(**locals()))
-            print("Avg downloads:\t\t{avg_downloads:,}".format(**locals()))
-            print("Total downloads:\t{total:,}".format(**locals()))
+            print("Min downloads:   {min_downloads:12,} ({min_ver})".format(**locals()))
+            print("Max downloads:   {max_downloads:12,} ({max_ver})".format(**locals()))
+            print("Avg downloads:   {avg_downloads:12,}".format(**locals()))
+            print("Total downloads: {total:12,}".format(**locals()))
             print()
     sys.exit(0)
 
