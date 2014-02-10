@@ -6,7 +6,7 @@ Prints download statistics for PyPI packages.
 Usage:
     pipstat <package> ...
 '''
-from __future__ import unicode_literals, print_function
+from __future__ import unicode_literals, print_function, division
 import sys
 import os
 import time
@@ -57,7 +57,7 @@ def bargraph(data):
     max_bar_width = get_display_width() - (max_length + 3 + max_val_length + 3)
     template = "{key:{key_width}} [ {value:{val_width},d} ] {bar}"
     for key, value in data.items():
-        bar = int(max_bar_width * value / max_val) * TICK
+        bar = int(math.ceil(max_bar_width * value / max_val)) * TICK
         line = template.format(key=key[:max_length], value=value,
             bar=bar, key_width=max_length, val_width=max_val_length)
         lines.append(line)
@@ -105,16 +105,20 @@ class Package(object):
     def version_dates(self):
         ret = OrderedDict()
         for release, info in self.release_info:
-            upload_time = info[0]['upload_time']
-            ret[release] = upload_time
+            if info:
+                upload_time = info[0]['upload_time']
+                ret[release] = upload_time
         return ret
 
     def chart(self):
         data = OrderedDict()
         for version, dl_count in self.version_downloads.items():
-            date_formatted = time.strftime(DATE_FORMAT,
-                self.version_dates[version].timetuple())
-            key = "{0:6} {1}".format(version, date_formatted)
+            date = self.version_dates.get(version)
+            date_formatted = ''
+            if date:
+                date_formatted = time.strftime(DATE_FORMAT,
+                    self.version_dates[version].timetuple())
+            key = "{0:7} {1}".format(version, date_formatted)
             data[key] = dl_count
         return bargraph(data)
 
