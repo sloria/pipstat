@@ -99,7 +99,7 @@ class Package(object):
 
     @property
     def release_info(self):
-        return reversed(zip(self.versions, self.release_urls))
+        return reversed(list(zip(self.versions, self.release_urls)))
 
     @lazy_property
     def version_dates(self):
