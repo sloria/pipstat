@@ -51,14 +51,13 @@ def get_display_width():
 def bargraph(data):
     """Return a bar graph as a string, given a dictionary of data."""
     lines = []
-    max_length = min(len(max(data.keys(), key=len)), 20)
-    n_val_characters = get_display_width() - max_length
+    max_length = min(max(len(key) for key in data.keys()), 20)
     max_val = max(data.values())
     max_val_length = max(len('{:,}'.format(val)) for val in data.values())
-    scale = max(1, int(math.ceil(float(max_val) / n_val_characters)))
+    max_bar_width = get_display_width() - (max_length + 3 + max_val_length + 3)
     template = "{key:{key_width}} [ {value:{val_width},d} ] {bar}"
     for key, value in data.items():
-        bar = int(value / scale) * TICK
+        bar = int(max_bar_width * value / max_val) * TICK
         line = template.format(key=key[:max_length], value=value,
             bar=bar, key_width=max_length, val_width=max_val_length)
         lines.append(line)
