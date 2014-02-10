@@ -3,6 +3,7 @@ from __future__ import unicode_literals
 from subprocess import check_output, CalledProcessError
 import pytest
 import random
+from datetime import datetime
 
 import pipstat
 
@@ -11,11 +12,18 @@ random.seed(42)
 # Build up a dict of release numbers => download counts
 MOCK_PACKAGE = 'cheesetest'
 versions = ['0.1', '0.1.1', '0.1.12', '0.2.0']
-releases = {}
-for ver in versions:
+release_downloads = {}
+release_urls = {}
+for i, ver in enumerate(versions):
     tar = '{0}-{1}.tar.gz'.format(MOCK_PACKAGE, ver)
     whl = '{0}-{1}-py2.py3-none-any.whl'.format(MOCK_PACKAGE, ver)
-    releases[ver] = [[tar, random.randint(0, 12345)], [whl, random.randint(0, 12345)]]
+    tar_downloads =  random.randint(0, 12345)
+    whl_downloads = random.randint(0, 12345)
+    release_downloads[ver] = [[tar, tar_downloads], [whl, whl_downloads]]
+    release_urls[ver] = [
+        {'downloads': tar_downloads, 'upload_date': datetime(2014, 5, i + 1)},
+        {'downloads': whl_downloads, 'upload_date': datetime(2014, 5, i + 1)}
+    ]
 
 
 class MockClient(object):
@@ -29,7 +37,13 @@ class MockClient(object):
 
     def release_downloads(self, name, version):
         if name == MOCK_PACKAGE:
-            return releases[version]
+            return release_downloads[version]
+        else:
+            return []
+
+    def release_urls(self, name, version):
+        if name == MOCK_PACKAGE:
+            return release_urls[version]
         else:
             return []
 
@@ -49,9 +63,13 @@ def test_error_raised_if_no_versions():
         p.versions
 
 
+def test_repr(package):
+    assert repr(package) == 'Package(name={0!r})'.format(MOCK_PACKAGE)
+
+
 def test_version_downloads(package):
     for ver in package.versions:
-        expected = sum(dl for _, dl in releases[ver])
+        expected = sum(dl for _, dl in release_downloads[ver])
         assert package.version_downloads[ver] == expected
 
 
@@ -70,7 +88,7 @@ def test_min_version(package):
 
 
 def test_avg_downloads(package):
-    avg = package.downloads / len(releases.keys())
+    avg = package.downloads / len(release_urls.keys())
     assert package.average_downloads == int(avg)
 
 

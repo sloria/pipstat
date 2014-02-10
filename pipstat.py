@@ -142,7 +142,7 @@ class Package(object):
         return int(self.downloads / len(self.versions))
 
     def __repr__(self):
-        return 'Package(name={0:!r})'.format(self.name)
+        return 'Package(name={0!r})'.format(self.name)
 
 
 def create_server_proxy():
