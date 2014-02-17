@@ -57,7 +57,10 @@ def bargraph(data):
     max_bar_width = get_display_width() - (max_length + 3 + max_val_length + 3)
     template = "{key:{key_width}} [ {value:{val_width},d} ] {bar}"
     for key, value in data.items():
-        bar = int(math.ceil(max_bar_width * value / max_val)) * TICK
+        try:
+            bar = int(math.ceil(max_bar_width * value / max_val)) * TICK
+        except ZeroDivisionError:
+            bar = ''
         line = template.format(key=key[:max_length], value=value,
             bar=bar, key_width=max_length, val_width=max_val_length)
         lines.append(line)

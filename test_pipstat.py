@@ -102,6 +102,10 @@ def test_pipstat_cmd_version():
     assert run_cmd('pipstat --version') == pipstat.__version__ + '\n'
 
 
+def test_no_division_by_zero_in_bargraph():
+    assert pipstat.TICK not in pipstat.bargraph({'foo': 0})
+
+
 def run_cmd(cmd):
     '''Run a shell command `cmd` and return its output.'''
     return check_output(cmd, shell=True).decode('utf-8')
