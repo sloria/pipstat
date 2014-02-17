@@ -42,14 +42,11 @@ def lazy_property(fn):
 def get_display_width():
     """Get the maximum display width to output."""
     fallback = int(os.environ.get('COLUMNS', 80))
-    if PY2:  # Python 2 does not have get_terminal_size, so just get it fron
-            # the environment variable and fallback to 80
-        return fallback
-    else:  # On Python 3, we can use the entire width of the terminal
-        try:
-            return os.get_terminal_size().columns
-        except OSError:
-            return fallback
+    try:  # On Python 3.3, we can use the entire width of the terminal
+        return os.get_terminal_size().columns
+    except (AttributeError, OSError):
+        pass
+    return fallback
 
 
 def bargraph(data):
