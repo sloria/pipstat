@@ -7,6 +7,7 @@ Usage:
     pipstat <package> ...
 '''
 from __future__ import unicode_literals, print_function, division
+import re
 import sys
 import os
 import time
@@ -25,6 +26,10 @@ __license__ = "MIT"
 DATE_FORMAT = "%y/%m/%d"
 MARGIN = 3
 TICK = '*'
+DEFAULT_PYPI = 'http://pypi.python.org/pypi'
+PYPI_RE = re.compile('''^(?:(?P<pypi>https?://[^/]+/pypi)/)?
+                        (?P<name>[-A-Za-z0-9.]+)
+                        (?:/(?P<version>[-A-Za-z0-9.]+))?$''', re.X)
 
 
 def lazy_property(fn):
@@ -152,8 +157,8 @@ class Package(object):
         return 'Package(name={0!r})'.format(self.name)
 
 
-def create_server_proxy():
-    return ServerProxy('http://pypi.python.org/pypi')
+def create_server_proxy(pypi_url=DEFAULT_PYPI):
+    return ServerProxy(pypi_url)
 
 
 def main():
@@ -171,10 +176,20 @@ def main():
         print(__doc__)
         sys.exit(1)
     else:
-        client = create_server_proxy()
-        for name in package_names:
-            print("Fetching statistics for {name!r}. . .".format(name=name))
-            package = Package(name, client=client)
+        clients = {}
+        for input_name in package_names:
+            m = PYPI_RE.match(input_name)
+            if not m:
+                print("Invalid name or URL: {name!r}".format(name=name),
+                      file=sys.stderr)
+                continue
+            pypi = m.group('pypi') or DEFAULT_PYPI
+            name = m.group('name')
+            if pypi not in clients:
+                clients[pypi] = create_server_proxy(pypi)
+            msg = "Fetching statistics for '{name}'. . ."
+            print(msg.format(name='%s/%s' % (pypi, name)))
+            package = Package(name, client=clients[pypi])
             try:
                 version_downloads = package.version_downloads
             except NotFoundError:
