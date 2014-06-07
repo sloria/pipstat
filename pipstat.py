@@ -11,6 +11,8 @@ import re
 import sys
 import os
 import time
+import struct
+
 PY2 = int(sys.version[0]) == 2
 import math
 from collections import OrderedDict
@@ -19,12 +21,12 @@ if PY2:
 else:
     from xmlrpc.client import ServerProxy
 
-__version__ = "0.2.1"
+__version__ = "0.3.0-dev"
 __author__ = "Steven Loria"
 __license__ = "MIT"
 
 DATE_FORMAT = "%y/%m/%d"
-MARGIN = 3
+MARGIN = 5
 TICK = '*'
 DEFAULT_PYPI = 'http://pypi.python.org/pypi'
 PYPI_RE = re.compile('''^(?:(?P<pypi>https?://[^/]+/pypi)/)?
@@ -43,15 +45,44 @@ def lazy_property(fn):
         return getattr(self, attr_name)
     return _lazy_property
 
+def get_terminal_size():
+    """Returns the current size of the terminal as tuple in the form
+    ``(width, height)`` in columns and rows.
 
-def get_display_width():
-    """Get the maximum display width to output."""
-    fallback = int(os.environ.get('COLUMNS', 80))
-    try:  # On Python 3.3, we can use the entire width of the terminal
-        return os.get_terminal_size().columns
-    except (AttributeError, OSError):
-        pass
-    return fallback
+    Credit to Armin Ronacher (BSD Licencsed). See NOTICE file for license info.
+    """
+    # If shutil has get_terminal_size() (Python 3.3 and later) use that
+    if sys.version_info >= (3, 3):
+        import shutil
+        shutil_get_terminal_size = getattr(shutil, 'get_terminal_size', None)
+        if shutil_get_terminal_size:
+            sz = shutil_get_terminal_size()
+            return sz.columns, sz.lines
+
+    def ioctl_gwinsz(fd):
+        try:
+            import fcntl
+            import termios
+            cr = struct.unpack(
+                'hh', fcntl.ioctl(fd, termios.TIOCGWINSZ, '1234'))
+        except Exception:
+            return
+        return cr
+
+    cr = ioctl_gwinsz(0) or ioctl_gwinsz(1) or ioctl_gwinsz(2)
+    if not cr:
+        try:
+            fd = os.open(os.ctermid(), os.O_RDONLY)
+            try:
+                cr = ioctl_gwinsz(fd)
+            finally:
+                os.close(fd)
+        except Exception:
+            pass
+    if not cr or not cr[0] or not cr[1]:
+        cr = (os.environ.get('LINES', 25),
+              os.environ.get('COLUMNS', 80))
+    return int(cr[1]), int(cr[0])
 
 
 def bargraph(data):
@@ -60,7 +91,8 @@ def bargraph(data):
     max_length = min(max(len(key) for key in data.keys()), 20)
     max_val = max(data.values())
     max_val_length = max(len('{:,}'.format(val)) for val in data.values())
-    max_bar_width = get_display_width() - (max_length + 3 + max_val_length + 3)
+    term_width = get_terminal_size()[0]
+    max_bar_width = term_width - MARGIN - (max_length + 3 + max_val_length + 3)
     template = "{key:{key_width}} [ {value:{val_width},d} ] {bar}"
     for key, value in data.items():
         try:
@@ -180,7 +212,7 @@ def main():
         for input_name in package_names:
             m = PYPI_RE.match(input_name)
             if not m:
-                print("Invalid name or URL: {name!r}".format(name=name),
+                print("Invalid name or URL: {name!r}".format(name=input_name),
                       file=sys.stderr)
                 continue
             pypi = m.group('pypi') or DEFAULT_PYPI
@@ -193,7 +225,7 @@ def main():
             try:
                 version_downloads = package.version_downloads
             except NotFoundError:
-                print("No versions of {0!r} were found.".format(name))
+                print("No versions of {0!r} were found.".format(name), file=sys.stderr)
                 sys.exit(1)
             chart = package.chart()
             min_ver, min_downloads = package.min_version
