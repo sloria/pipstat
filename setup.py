@@ -59,7 +59,8 @@ setup(
     name='pipstat',
     version=__version__,
     description='Get download counts for PyPI packages from the command line',
-    long_description=read("README.rst"),
+    long_description=(read("README.rst") + '\n\n' +
+                      read('HISTORY.rst')),
     author='Steven Loria',
     author_email='sloria1@gmail.com',
     url='https://github.com/sloria/pipstat',
