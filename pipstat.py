@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-'''pipstat
+"""pipstat
 Prints download statistics for PyPI packages.
 
 Usage:
     pipstat <package> ...
-'''
+"""
 from __future__ import unicode_literals, print_function, division
 import re
 import sys
@@ -13,13 +13,8 @@ import os
 import time
 import struct
 
-PY2 = int(sys.version[0]) == 2
 import math
 from collections import OrderedDict
-if PY2:
-    from xmlrpclib import ServerProxy
-else:
-    from xmlrpc.client import ServerProxy
 
 import requests
 from dateutil.parser import parse as dateparse
