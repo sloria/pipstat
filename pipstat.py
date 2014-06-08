@@ -21,6 +21,9 @@ if PY2:
 else:
     from xmlrpc.client import ServerProxy
 
+import requests
+from dateutil.parser import parse as dateparse
+
 __version__ = "0.3.0-dev"
 __author__ = "Steven Loria"
 __license__ = "MIT"
@@ -105,29 +108,32 @@ def bargraph(data):
     return '\n'.join(lines)
 
 
-class NotFoundError(Exception):
+class PackageError(Exception):
+    pass
+
+
+class NotFoundError(PackageError):
     pass
 
 
 class Package(object):
 
-    def __init__(self, name, client):
-        self.client = client
+    def __init__(self, name, client=None, pypi_url=DEFAULT_PYPI):
+        self.client = client or requests.Session()
         self.name = name
+        self.url = '{pypi_url}/{name}/json'.format(pypi_url=pypi_url, name=name)
+
+    @lazy_property
+    def data(self):
+        resp = self.client.get(self.url)
+        if resp.status_code == 404:
+            raise NotFoundError('Package not found')
+        return resp.json()
 
     @lazy_property
     def versions(self):
-        """Return a list of versions"""
-        versions = self.client.package_releases(self.name, True)
-        if versions:
-            return versions
-        else:
-            raise NotFoundError('Package not found')
-
-    @lazy_property
-    def release_urls(self):
-        return [self.client.release_urls(self.name, release)
-                for release in self.versions]
+        """Return a list of versions, sorted by release datae."""
+        return [k for k, v in self.release_info]
 
     @lazy_property
     def version_downloads(self):
@@ -140,14 +146,19 @@ class Package(object):
 
     @property
     def release_info(self):
-        return reversed(list(zip(self.versions, self.release_urls)))
+        release_info = self.data['releases']
+        # filter out any versions that have no releases
+        filtered = [(ver, releases) for ver, releases in release_info.items()
+                    if len(releases) > 0]
+        # sort by first upload date of each release
+        return sorted(filtered, key=lambda x: x[1][0]['upload_time'])
 
     @lazy_property
     def version_dates(self):
         ret = OrderedDict()
         for release, info in self.release_info:
             if info:
-                upload_time = info[0]['upload_time']
+                upload_time = dateparse(info[0]['upload_time'])
                 ret[release] = upload_time
         return ret
 
@@ -186,11 +197,7 @@ class Package(object):
         return int(self.downloads / len(self.versions))
 
     def __repr__(self):
-        return 'Package(name={0!r})'.format(self.name)
-
-
-def create_server_proxy(pypi_url=DEFAULT_PYPI):
-    return ServerProxy(pypi_url)
+        return '<Package(name={0!r})>'.format(self.name)
 
 
 def main():
@@ -204,24 +211,22 @@ def main():
         sys.exit(0)
     package_names = sys.argv[1:]
     if len(package_names) < 1:
-        print("No package names specified.")
+        print("No package names specified.", file=sys.stderr)
         print(__doc__)
         sys.exit(1)
     else:
-        clients = {}
+        client = requests.Session()
         for input_name in package_names:
             m = PYPI_RE.match(input_name)
             if not m:
                 print("Invalid name or URL: {name!r}".format(name=input_name),
                       file=sys.stderr)
                 continue
-            pypi = m.group('pypi') or DEFAULT_PYPI
+            pypi_url = m.group('pypi') or DEFAULT_PYPI
             name = m.group('name')
-            if pypi not in clients:
-                clients[pypi] = create_server_proxy(pypi)
-            msg = "Fetching statistics for '{name}'. . ."
-            print(msg.format(name='%s/%s' % (pypi, name)))
-            package = Package(name, client=clients[pypi])
+            url = "{pypi_url}/{name}".format(pypi_url=pypi_url, name=name)
+            print("Fetching statistics for '{url}'. . .".format(url=pypi_url))
+            package = Package(name, pypi_url=pypi_url, client=client)
             try:
                 version_downloads = package.version_downloads
             except NotFoundError:
