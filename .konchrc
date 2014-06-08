@@ -1,0 +1,15 @@
+# -*- coding: utf-8 -*-
+import konch
+
+import requests
+import pipstat
+from pipstat import Package
+
+konch.config({
+    'context': {
+        'Package': Package,
+        'pipstat': pipstat,
+        'rget': requests.get,
+        'rpost': requests.post,
+    }
+})
