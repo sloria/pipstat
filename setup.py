@@ -3,7 +3,23 @@ import re
 import subprocess
 
 from setuptools import setup
+from setuptools.command.test import test as TestCommand
 
+REQUIRES = [
+    'requests>=2.3.0',
+    'python-dateutil==2.2',
+]
+
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = ['--verbose']
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main(self.test_args)
+        sys.exit(errcode)
 
 def find_version(fname):
     '''Attempts to find the version number in the file names fname.
@@ -25,7 +41,6 @@ __version__ = find_version("pipstat.py")
 
 PUBLISH_CMD = "python setup.py register sdist upload"
 TEST_PUBLISH_CMD = 'python setup.py register -r test sdist upload -r test'
-TEST_CMD = 'nosetests'
 
 if 'publish' in sys.argv:
     status = subprocess.call(PUBLISH_CMD, shell=True)
@@ -48,7 +63,7 @@ setup(
     author='Steven Loria',
     author_email='sloria1@gmail.com',
     url='https://github.com/sloria/pipstat',
-    install_requires=[],
+    install_requires=REQUIRES,
     license=read("LICENSE"),
     zip_safe=False,
     keywords='pipstat pypi statistics download count metrics',
@@ -61,8 +76,8 @@ setup(
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: Implementation :: CPython',
-        'Programming Language :: Python :: Implementation :: PyPy'
     ],
     py_modules=["pipstat"],
     entry_points={
@@ -70,5 +85,6 @@ setup(
             "pipstat = pipstat:main"
         ]
     },
-    tests_require=['pytest'],
+    tests_require=['pytest', 'responses'],
+    cmdclass={'test': PyTest}
 )
