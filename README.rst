@@ -2,13 +2,13 @@
 pipstat
 =======
 
-.. image:: https://badge.fury.io/py/pipstat.png
-    :target: http://badge.fury.io/py/pipstat
-    :alt: Latest version
+DEPRECATED
+==========
 
-.. image:: https://travis-ci.org/sloria/pipstat.png?branch=master
-    :target: https://travis-ci.org/sloria/pipstat
-    :alt: Travis-CI
+pipstat has been deprecated. Use the newer and actively maintained `pypi-stat`_
+
+.. _pypi-stat: https://github.com/sloria/pypi-cli
+
 
 Get download statistics for PyPI packages from the command line.
 ::

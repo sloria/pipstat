@@ -191,6 +191,18 @@ class Package(object):
         """Average number of downloads."""
         return int(self.downloads / len(self.versions))
 
+    @property
+    def downloads_last_day(self):
+        return self.data['info']['downloads']['last_day']
+
+    @property
+    def downloads_last_week(self):
+        return self.data['info']['downloads']['last_week']
+
+    @property
+    def downloads_last_month(self):
+        return self.data['info']['downloads']['last_month']
+
     def __repr__(self):
         return '<Package(name={0!r})>'.format(self.name)
 
@@ -244,6 +256,9 @@ def main():
             print("Avg downloads:   {avg_downloads:12,}".format(**locals()))
             print("Total downloads: {total:12,}".format(**locals()))
             print()
+            print('Last day:    {daily:12,}'.format(daily=package.downloads_last_day))
+            print('Last week:   {weekly:12,}'.format(weekly=package.downloads_last_week))
+            print('Last month:  {monthly:12,}'.format(monthly=package.downloads_last_month))
     sys.exit(0)
 
 if __name__ == '__main__':
